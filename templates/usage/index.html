@@ -1,0 +1,65 @@
+{% extends "layouts/app.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>استخدام العمليات ({{ data.month }})</h1>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">تقرير الاستهلاك</span>
+    </div>
+    
+    <div class="grid-3" style="margin-bottom: 2rem;">
+        <div style="background: var(--surface-variant); padding: 1rem; border-radius: var(--radius-sm);">
+            <strong>تجاوز الحد:</strong> <span style="color: var(--danger); font-size: 1.5rem; font-weight: 700;">{{ data.over_limit|length }}</span> مزرعة
+        </div>
+        <div style="background: var(--surface-variant); padding: 1rem; border-radius: var(--radius-sm);">
+            <strong>قريب من الحد:</strong> <span style="color: var(--warning); font-size: 1.5rem; font-weight: 700;">{{ data.near_limit|length }}</span> مزرعة
+        </div>
+        <div style="background: var(--surface-variant); padding: 1rem; border-radius: var(--radius-sm);">
+            <strong>على الحد تماماً:</strong> <span style="color: var(--warning); font-size: 1.5rem; font-weight: 700;">{{ data.at_limit|length }}</span> مزرعة
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>المزرعة</th>
+                    <th>الاستخدام</th>
+                    <th>الحد المجاني</th>
+                    <th>الحالة التشغيلية</th>
+                    <th>شريط التقدم</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data.items %}
+                <tr>
+                    <td><a href="/admin/farms/{{ item.farm_id }}">{{ item.farm_name }}</a></td>
+                    <td style="font-weight: 600;">{{ item.usage.used }}</td>
+                    <td>{{ item.usage.limit }}</td>
+                    <td>
+                        {% if item.usage.over_limit %}
+                            <span class="badge badge-danger">تجاوز الحد</span>
+                        {% elif item.usage.threshold_1_reached %}
+                            <span class="badge badge-warning">تنبيه استهلاك</span>
+                        {% else %}
+                            <span class="badge badge-active">ضمن الحد المجاني</span>
+                        {% endif %}
+                    </td>
+                    <td style="width: 200px;">
+                        <div class="progress-container">
+                            {% set pct = [100, (item.usage.used / item.usage.limit * 100)]|min if item.usage.limit > 0 else 0 %}
+                            {% set color = 'var(--success)' %}
+                            {% if item.usage.over_limit %}{% set color = 'var(--danger)' %}{% elif item.usage.threshold_1_reached %}{% set color = 'var(--warning)' %}{% endif %}
+                            <div class="progress-bar" style="width: {{ pct }}%; background-color: {{ color }};"></div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "layouts/app.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>تفاصيل المزرعة: {{ farm.name }}</h1>
+    <a href="/admin/farms" class="btn btn-secondary">العودة للقائمة</a>
+</div>
+
+<div class="grid-3" style="margin-bottom: 1.5rem;">
+    <!-- Farm Info -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+            <span class="card-title">المعلومات الأساسية</span>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <strong>المسؤول:</strong> {{ farm.contact_name or 'غير محدد' }}<br>
+            <strong>الهاتف:</strong> <span dir="ltr">{{ farm.contact_phone or 'غير محدد' }}</span><br>
+            <strong>ملاحظات:</strong> {{ farm.notes or 'لا يوجد' }}
+        </div>
+        
+        <form action="/admin/farms/{{ farm.id }}/status" method="POST" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+            <h4>تغيير حالة المزرعة</h4>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <select name="status" class="form-control" style="margin-bottom: 0;">
+                    <option value="active" {% if farm.status == 'active' %}selected{% endif %}>نشط</option>
+                    <option value="suspended" {% if farm.status == 'suspended' %}selected{% endif %}>معلق</option>
+                </select>
+                <input type="text" name="reason" class="form-control" placeholder="السبب (مطلوب للتعليق)" style="margin-bottom: 0;">
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </div>
+        </form>
+
+        <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+            <h4>مفتاح الربط (API Key)</h4>
+            <div class="alert alert-success" style="word-break: break-all;" dir="ltr">
+                {{ farm.api_key if farm.api_key else '***********' }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage & Subscription Info -->
+    <div class="card" style="margin-bottom: 0; grid-column: span 2;">
+        <div class="card-header">
+            <span class="card-title">الاستهلاك والاشتراك الحالي</span>
+            {% if farm.subscription.active %}
+                <span class="badge badge-active">اشتراك مدفوع نشط</span>
+            {% else %}
+                {% if farm.usage.over_limit %}
+                    <span class="badge badge-danger">تجاوز الحد (متوقف)</span>
+                {% else %}
+                    <span class="badge badge-warning">باقة مجانية</span>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <h4>استهلاك هذا الشهر: {{ farm.usage.used }} / {{ farm.usage.limit }} عملية</h4>
+            <div class="progress-container">
+                {% set pct = [100, (farm.usage.used / farm.usage.limit * 100)]|min if farm.usage.limit > 0 else 0 %}
+                {% set color = 'var(--success)' %}
+                {% if farm.usage.over_limit %}{% set color = 'var(--danger)' %}{% elif farm.usage.threshold_1_reached %}{% set color = 'var(--warning)' %}{% endif %}
+                <div class="progress-bar" style="width: {{ pct }}%; background-color: {{ color }};"></div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.5rem 0;">
+
+        <h4>تجديد / إضافة اشتراك مدفوع</h4>
+        <form action="/admin/farms/{{ farm.id }}/subscription" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <div>
+                <label class="text-muted text-sm">المدة بالأشهر</label>
+                <input type="number" name="months" class="form-control" value="1" min="0">
+            </div>
+            <div>
+                <label class="text-muted text-sm">أيام إضافية</label>
+                <input type="number" name="days" class="form-control" value="0" min="0">
+            </div>
+            <div>
+                <label class="text-muted text-sm">السعر (اختياري)</label>
+                <input type="number" step="0.01" name="price" class="form-control" placeholder="يتبع الإعدادات الافتراضية">
+            </div>
+            <div>
+                <label class="text-muted text-sm">حالة الدفع</label>
+                <select name="payment_status" class="form-control">
+                    <option value="paid">تم الدفع</option>
+                    <option value="pending">معلق (آجل)</option>
+                </select>
+            </div>
+            <div style="grid-column: span 2;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">إضافة الاشتراك المفتوح</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">سجل الاشتراكات</span>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>المعرف</th>
+                    <th>من تاريخ</th>
+                    <th>إلى تاريخ</th>
+                    <th>الحالة</th>
+                    <th>السعر</th>
+                    <th>حالة الدفع</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in farm.subscriptions_history %}
+                <tr>
+                    <td>#{{ sub.id }}</td>
+                    <td dir="ltr">{{ sub.start_date }}</td>
+                    <td dir="ltr">{{ sub.end_date }}</td>
+                    <td>
+                        {% if sub.status == 'active' %} <span class="badge badge-active">نشط</span>
+                        {% elif sub.status == 'cancelled' %} <span class="badge badge-danger">ملغي</span>
+                        {% else %} <span class="badge badge-suspended">منتهي</span> {% endif %}
+                    </td>
+                    <td>{{ sub.price }} {{ sub.currency }}</td>
+                    <td>
+                        {% if sub.payment_status == 'paid' %} <span style="color: var(--success);">مدفوع</span>
+                        {% else %} <span style="color: var(--warning);">آجل (معلق)</span> {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

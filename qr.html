@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>باركود التطبيق</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        p { color: #666; font-size: 18px; }
+        .url { font-weight: bold; color: teal; font-size: 24px; margin-top: 20px;}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>امسح الباركود لتشغيل التطبيق 📱</h1>
+    <p>قم بفتح كاميرا هاتفك ووجهها نحو المربع أدناه للاتصال بالتطبيق مباشرة</p>
+    
+    <!-- QR Code Image -->
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=http://192.168.8.200:8080" alt="QR Code" width="300" height="300">
+    
+    <div class="url">
+        أو ادخل الرابط يدوياً في متصفح الهاتف:<br>
+        http://192.168.8.200:8080
+    </div>
+</div>
+
+</body>
+</html>

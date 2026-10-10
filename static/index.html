@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة عمال المزرعة والمستحقات</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- مكتبة تصدير Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 pb-12">
+
+    <!-- شريط العنوان الرئيسي -->
+    <header class="bg-emerald-700 text-white p-4 shadow-md sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-wheat-awn"></i> إدارة عمال المزرعة
+            </h1>
+            <span id="workerCount" class="bg-emerald-800 text-xs px-3 py-1 rounded-full border border-emerald-600">0 عمال</span>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 space-y-6">
+
+        <!-- أزرار التحكم والصفحة الرئيسية -->
+        <div class="grid grid-cols-3 gap-2 md:gap-3">
+            <button onclick="prepareAddNewWorker()" class="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl shadow-sm font-semibold flex items-center justify-center gap-2 text-xs md:text-sm transition">
+                <i class="fa-solid fa-user-plus"></i> إضافة عامل
+            </button>
+            <button onclick="showSection('list')" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 p-3 rounded-xl shadow-sm font-semibold flex items-center justify-center gap-2 text-xs md:text-sm transition">
+                <i class="fa-solid fa-users"></i> عرض العمال
+            </button>
+            <button onclick="exportToExcel()" class="bg-emerald-800 hover:bg-emerald-900 text-white p-3 rounded-xl shadow-sm font-semibold flex items-center justify-center gap-2 text-xs md:text-sm transition">
+                <i class="fa-solid fa-file-excel"></i> تصدير Excel
+            </button>
+        </div>
+
+        <!-- 1. قسم إضافة/تعديل عامل -->
+        <section id="addSection" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 id="formTitle" class="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fa-solid fa-address-card text-emerald-600"></i> بيانات العامل
+            </h2>
+            <form id="workerForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="workerId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">اسم العامل الكامل <span class="text-rose-500">*</span></label>
+                        <input type="text" id="name" required placeholder="مثال: محمد أحمد" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">رقم الهاتف <span class="text-rose-500">*</span></label>
+                        <input type="tel" id="phone" required placeholder="0500000000" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">تاريخ بداية العمل <span class="text-rose-500">*</span></label>
+                        <input type="date" id="startDate" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">تاريخ نهاية العمل <span class="text-slate-400 text-xs">(اختياري)</span></label>
+                        <input type="date" id="endDate" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">طبيعة العمل / المهمة <span class="text-rose-500">*</span></label>
+                        <input type="text" id="job" required placeholder="مثال: جني المحصول، الري..." class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">نظام الأجر <span class="text-rose-500">*</span></label>
+                            <select id="payType" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                                <option value="يومي">يومي</option>
+                                <option value="أسبوعي">أسبوعي</option>
+                                <option value="شهري">شهري</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">المبلغ <span class="text-rose-500">*</span></label>
+                            <input type="number" id="payAmount" required min="1" placeholder="مثال: 100" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" id="submitBtn" class="flex-grow bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-sm transition">
+                        حفظ البيانات
+                    </button>
+                    <button type="button" id="cancelBtn" onclick="showSection('list')" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-6 rounded-lg transition">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- 2. قسم عرض العمال (بطاقات Cards) -->
+        <section id="listSection" class="hidden space-y-4">
+            <!-- أدوات الفلترة والبحث -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-2 justify-between">
+                <input type="text" id="searchInput" oninput="renderWorkers()" placeholder="ابحث باسم العامل أو الهاتف..." class="p-2 border rounded-lg w-full md:w-64 outline-none text-sm">
+                <div class="flex gap-1 text-sm overflow-x-auto pb-1 md:pb-0">
+                    <button onclick="setFilter('all')" id="filter-all" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium whitespace-nowrap">الكل</button>
+                    <button onclick="setFilter('active')" id="filter-active" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium whitespace-nowrap">النشطون</button>
+                    <button onclick="setFilter('expired')" id="filter-expired" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium whitespace-nowrap">المنتهية</button>
+                </div>
+            </div>
+
+            <!-- شبكة البطاقات -->
+            <div id="workersGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- سيتم توليد البطاقات هنا بواسطة JavaScript -->
+            </div>
+        </section>
+
+        <!-- 3. نافذة إدارة السُّلف والحساب المالي (Modal) -->
+        <div id="financeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-xl relative">
+                
+                <!-- رأس النافذة مع زر إغلاق واضح (X) -->
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="font-bold text-slate-800 text-base md:text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-emerald-600"></i> الحساب المالي: <span id="modalWorkerName" class="text-emerald-700"></span>
+                    </h3>
+                    <button onclick="closeFinanceModal()" class="bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600 w-9 h-9 rounded-full flex items-center justify-center transition shadow-sm font-bold text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- إحصائيات سريعة -->
+                <div class="grid grid-cols-3 gap-2 text-center text-xs md:text-sm">
+                    <div class="bg-emerald-50 border border-emerald-200 p-2 rounded-xl">
+                        <span class="block text-slate-500">إجمالي الأجر</span>
+                        <span id="statTotalPay" class="font-bold text-emerald-700 text-base">0</span>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-200 p-2 rounded-xl">
+                        <span class="block text-slate-500">إجمالي السُّلف</span>
+                        <span id="statAdvances" class="font-bold text-rose-600 text-base">0</span>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 p-2 rounded-xl">
+                        <span class="block text-slate-500">المتبقي للعامل</span>
+                        <span id="statRemaining" class="font-bold text-blue-700 text-base">0</span>
+                    </div>
+                </div>
+
+                <!-- إضافة سلفة جديد -->
+                <form onsubmit="addAdvance(event)" class="bg-slate-50 p-3 rounded-xl border space-y-2">
+                    <label class="block text-xs font-bold text-slate-700">تسجيل سلفة / مصروف جديد</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="advAmount" required min="1" placeholder="المبلغ *" class="w-1/3 p-2 border rounded-lg text-sm outline-none">
+                        <input type="text" id="advNotes" placeholder="بيان (مثال: سلفة علاج، خضار...)" class="w-2/3 p-2 border rounded-lg text-sm outline-none">
+                        <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white px-4 rounded-lg font-bold text-sm shrink-0">إضافة</button>
+                    </div>
+                </form>
+
+                <!-- سجل السلف السابقة -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold text-slate-600">سجل المسحوبات والسُّلف:</h4>
+                    <div id="advancesList" class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                        <!-- تُولد الديناميكياً -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

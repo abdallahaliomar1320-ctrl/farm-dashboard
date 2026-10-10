@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة عمال المزرعة والمستحقات</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- مكتبة تصدير Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 pb-12">
+
+    <!-- شريط العنوان الرئيسي -->
+    <header class="bg-emerald-700 text-white p-4 shadow-md sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-wheat-awn"></i> إدارة عمال المزرعة
+            </h1>
+            <span id="workerCount" class="bg-emerald-800 text-xs px-3 py-1 rounded-full border border-emerald-600">0 عمال</span>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 space-y-6">
+
+        <!-- أزرار التحكم والصفحة الرئيسية -->
+        <div class="grid grid-cols-3 gap-2 md:gap-3">
+            <button onclick="prepareAddNewWorker()" class="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl shadow-sm font-semibold flex items-center justify-center gap-2 text-xs md:text-sm transition">
+                <i class="fa-solid fa-user-plus"></i> إضافة عامل
+            </button>
+            <button onclick="showSection('list')" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 p-3 rounded-xl shadow-sm font-semibold flex items-center justify-center gap-2 text-xs md:text-sm transition">
+                <i class="fa-solid fa-users"></i> عرض العمال
+            </button>
+            <button onclick="exportToExcel()" class="bg-emerald-800 hover:bg-emerald-900 text-white p-3 rounded-xl shadow-sm font-semibold flex items-center justify-center gap-2 text-xs md:text-sm transition">
+                <i class="fa-solid fa-file-excel"></i> تصدير Excel
+            </button>
+        </div>
+
+        <!-- 1. قسم إضافة/تعديل عامل -->
+        <section id="addSection" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 id="formTitle" class="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fa-solid fa-address-card text-emerald-600"></i> بيانات العامل
+            </h2>
+            <form id="workerForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="workerId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">اسم العامل الكامل <span class="text-rose-500">*</span></label>
+                        <input type="text" id="name" required placeholder="مثال: محمد أحمد" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">رقم الهاتف <span class="text-rose-500">*</span></label>
+                        <input type="tel" id="phone" required placeholder="0500000000" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">تاريخ بداية العمل <span class="text-rose-500">*</span></label>
+                        <input type="date" id="startDate" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">تاريخ نهاية العمل <span class="text-slate-400 text-xs">(اختياري)</span></label>
+                        <input type="date" id="endDate" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">طبيعة العمل / المهمة <span class="text-rose-500">*</span></label>
+                        <input type="text" id="job" required placeholder="مثال: جني المحصول، الري..." class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">نظام الأجر <span class="text-rose-500">*</span></label>
+                            <select id="payType" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                                <option value="يومي">يومي</option>
+                                <option value="أسبوعي">أسبوعي</option>
+                                <option value="شهري">شهري</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">المبلغ <span class="text-rose-500">*</span></label>
+                            <input type="number" id="payAmount" required min="1" placeholder="مثال: 100" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" id="submitBtn" class="flex-grow bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-sm transition">
+                        حفظ البيانات
+                    </button>
+                    <button type="button" id="cancelBtn" onclick="showSection('list')" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 px-6 rounded-lg transition">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- 2. قسم عرض العمال (بطاقات Cards) -->
+        <section id="listSection" class="hidden space-y-4">
+            <!-- أدوات الفلترة والبحث -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-2 justify-between">
+                <input type="text" id="searchInput" oninput="renderWorkers()" placeholder="ابحث باسم العامل أو الهاتف..." class="p-2 border rounded-lg w-full md:w-64 outline-none text-sm">
+                <div class="flex gap-1 text-sm overflow-x-auto pb-1 md:pb-0">
+                    <button onclick="setFilter('all')" id="filter-all" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium whitespace-nowrap">الكل</button>
+                    <button onclick="setFilter('active')" id="filter-active" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium whitespace-nowrap">النشطون</button>
+                    <button onclick="setFilter('expired')" id="filter-expired" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium whitespace-nowrap">المنتهية</button>
+                </div>
+            </div>
+
+            <!-- شبكة البطاقات -->
+            <div id="workersGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- سيتم توليد البطاقات هنا بواسطة JavaScript -->
+            </div>
+        </section>
+
+        <!-- 3. نافذة إدارة السُّلف والحساب المالي (Modal) -->
+        <div id="financeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-xl relative">
+                
+                <!-- رأس النافذة مع زر إغلاق واضح (X) -->
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="font-bold text-slate-800 text-base md:text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-emerald-600"></i> الحساب المالي: <span id="modalWorkerName" class="text-emerald-700"></span>
+                    </h3>
+                    <button onclick="closeFinanceModal()" class="bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600 w-9 h-9 rounded-full flex items-center justify-center transition shadow-sm font-bold text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- إحصائيات سريعة -->
+                <div class="grid grid-cols-3 gap-2 text-center text-xs md:text-sm">
+                    <div class="bg-emerald-50 border border-emerald-200 p-2 rounded-xl">
+                        <span class="block text-slate-500">إجمالي الأجر</span>
+                        <span id="statTotalPay" class="font-bold text-emerald-700 text-base">0</span>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-200 p-2 rounded-xl">
+                        <span class="block text-slate-500">إجمالي السُّلف</span>
+                        <span id="statAdvances" class="font-bold text-rose-600 text-base">0</span>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 p-2 rounded-xl">
+                        <span class="block text-slate-500">المتبقي للعامل</span>
+                        <span id="statRemaining" class="font-bold text-blue-700 text-base">0</span>
+                    </div>
+                </div>
+
+                <!-- إضافة سلفة جديد -->
+                <form onsubmit="addAdvance(event)" class="bg-slate-50 p-3 rounded-xl border space-y-2">
+                    <label class="block text-xs font-bold text-slate-700">تسجيل سلفة / مصروف جديد</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="advAmount" required min="1" placeholder="المبلغ *" class="w-1/3 p-2 border rounded-lg text-sm outline-none">
+                        <input type="text" id="advNotes" placeholder="بيان (مثال: سلفة علاج، خضار...)" class="w-2/3 p-2 border rounded-lg text-sm outline-none">
+                        <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white px-4 rounded-lg font-bold text-sm shrink-0">إضافة</button>
+                    </div>
+                </form>
+
+                <!-- سجل السلف السابقة -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold text-slate-600">سجل المسحوبات والسُّلف:</h4>
+                    <div id="advancesList" class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                        <!-- تُولد الديناميكياً -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let workers = JSON.parse(localStorage.getItem('farm_workers')) || [];
+        let currentFilter = 'all';
+        let isEditing = false;
+        let activeWorkerId = null;
+
+        document.getElementById('startDate').valueAsDate = new Date();
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const workerData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                job: document.getElementById('job').value,
+                payType: document.getElementById('payType').value,
+                payAmount: parseFloat(document.getElementById('payAmount').value) || 0
+            };
+
+            if (isEditing) {
+                const id = parseInt(document.getElementById('workerId').value);
+                const index = workers.findIndex(w => w.id === id);
+                if (index !== -1) {
+                    workers[index] = { ...workers[index], ...workerData };
+                    alert('تم تحديث البيانات بنجاح!');
+                }
+            } else {
+                const newWorker = {
+                    id: Date.now(),
+                    advances: [],
+                    daysWorked: 0,
+                    ...workerData
+                };
+                workers.push(newWorker);
+                alert('تم حفظ العامل بنجاح!');
+            }
+
+            localStorage.setItem('farm_workers', JSON.stringify(workers));
+            resetForm();
+            showSection('list');
+        }
+
+        function prepareAddNewWorker() {
+            resetForm();
+            isEditing = false;
+            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-user-plus text-emerald-600"></i> إضافة عامل جديد';
+            document.getElementById('submitBtn').textContent = 'حفظ البيانات';
+            document.getElementById('cancelBtn').classList.add('hidden');
+            showSection('add');
+        }
+
+        function editWorker(id) {
+            const worker = workers.find(w => w.id === id);
+            if (!worker) return;
+
+            isEditing = true;
+            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-user-pen text-amber-600"></i> تعديل بيانات العامل';
+            document.getElementById('submitBtn').textContent = 'تحديث البيانات';
+            document.getElementById('submitBtn').className = 'flex-grow bg-amber-600 text-white font-bold py-3 rounded-lg shadow-sm';
+            document.getElementById('cancelBtn').classList.remove('hidden');
+
+            document.getElementById('workerId').value = worker.id;
+            document.getElementById('name').value = worker.name;
+            document.getElementById('phone').value = worker.phone;
+            document.getElementById('startDate').value = worker.startDate;
+            document.getElementById('endDate').value = worker.endDate || '';
+            document.getElementById('job').value = worker.job;
+            document.getElementById('payType').value = worker.payType;
+            document.getElementById('payAmount').value = worker.payAmount;
+
+            showSection('add');
+        }
+
+        function resetForm() {
+            document.getElementById('workerForm').reset();
+            document.getElementById('workerId').value = '';
+            document.getElementById('startDate').valueAsDate = new Date();
+            document.getElementById('submitBtn').className = 'flex-grow bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-sm transition';
+        }
+
+        function deleteWorker(id) {
+            if (confirm('هل أنت تأكد من حذف هذا العامل وحساباته؟')) {
+                workers = workers.filter(w => w.id !== id);
+                localStorage.setItem('farm_workers', JSON.stringify(workers));
+                renderWorkers();
+            }
+        }
+
+        function isWorkerActive(endDateStr) {
+            if (!endDateStr) return true; 
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return new Date(endDateStr) >= today;
+        }
+
+        // --- إدارة المالية والسلف ---
+        function openFinanceModal(id) {
+            activeWorkerId = id;
+            const worker = workers.find(w => w.id === id);
+            if (!worker) return;
+
+            if (!worker.advances) worker.advances = [];
+
+            document.getElementById('modalWorkerName').textContent = worker.name;
+            updateFinanceUI(worker);
+            document.getElementById('financeModal').classList.remove('hidden');
+        }
+
+        function closeFinanceModal() {
+            document.getElementById('financeModal').classList.add('hidden');
+            activeWorkerId = null;
+            renderWorkers();
+        }
+
+        function addAdvance(e) {
+            e.preventDefault();
+            const worker = workers.find(w => w.id === activeWorkerId);
+            if (!worker) return;
+
+            const amount = parseFloat(document.getElementById('advAmount').value);
+            const notes = document.getElementById('advNotes').value || 'سلفة نقداً';
+
+            if (amount > 0) {
+                worker.advances.push({
+                    id: Date.now(),
+                    amount: amount,
+                    notes: notes,
+                    date: new Date().toISOString().split('T')[0]
+                });
+
+                localStorage.setItem('farm_workers', JSON.stringify(workers));
+                document.getElementById('advAmount').value = '';
+                document.getElementById('advNotes').value = '';
+                updateFinanceUI(worker);
+            }
+        }
+
+        function deleteAdvance(advId) {
+            const worker = workers.find(w => w.id === activeWorkerId);
+            if (!worker) return;
+
+            worker.advances = worker.advances.filter(a => a.id !== advId);
+            localStorage.setItem('farm_workers', JSON.stringify(workers));
+            updateFinanceUI(worker);
+        }
+
+        function updateFinanceUI(worker) {
+            const totalAdvances = (worker.advances || []).reduce((sum, a) => sum + a.amount, 0);
+            const totalPay = worker.payAmount || 0;
+            const remaining = totalPay - totalAdvances;
+
+            document.getElementById('statTotalPay').textContent = `${totalPay} ريال`;
+            document.getElementById('statAdvances').textContent = `${totalAdvances} ريال`;
+            document.getElementById('statRemaining').textContent = `${remaining} ريال`;
+
+            const list = document.getElementById('advancesList');
+            list.innerHTML = '';
+
+            if (!worker.advances || worker.advances.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">لا توجد سُلف مسجلة</p>`;
+                return;
+            }
+
+            worker.advances.forEach(a => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-100 p-2 rounded-lg text-xs">
+                        <div>
+                            <span class="font-bold text-rose-600">${a.amount} ريال</span> - 
+                            <span class="text-slate-600">${a.notes}</span>
+                            <span class="text-slate-400 text-[10px] block">${a.date}</span>
+                        </div>
+                        <button onclick="deleteAdvance(${a.id})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        // --- عرض البطاقات ---
+        function renderWorkers() {
+            const grid = document.getElementById('workersGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            grid.innerHTML = '';
+
+            const filtered = workers.filter(w => {
+                const matchesSearch = w.name.toLowerCase().includes(search) || w.phone.includes(search);
+                const active = isWorkerActive(w.endDate);
+                if (currentFilter === 'active') return matchesSearch && active;
+                if (currentFilter === 'expired') return matchesSearch && !active;
+                return matchesSearch;
+            });
+
+            document.getElementById('workerCount').textContent = `${workers.length} عمال`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-8 text-slate-400">لا يوجد عمال لعرضهم</div>`;
+                return;
+            }
+
+            filtered.forEach(w => {
+                const active = isWorkerActive(w.endDate);
+                const statusBadge = active 
+                    ? `<span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">🟢 نشط</span>`
+                    : `<span class="bg-rose-100 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-full">🔴 منتهي</span>`;
+
+                const endDateDisplay = w.endDate ? w.endDate : 'مستمر';
+                const totalAdv = (w.advances || []).reduce((sum, a) => sum + a.amount, 0);
+                const remainingPay = (w.payAmount || 0) - totalAdv;
+
+                grid.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-blue-50 text-blue-600 p-3 rounded-full flex items-center justify-center">
+                                    <i class="fa-solid fa-users text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-xl">${w.name}</h3>
+                                    <div class="flex items-center gap-1 text-sm text-slate-500 mt-1">
+                                        <i class="fa-solid fa-briefcase"></i>
+                                        <span>طبيعة العمل: ${w.job}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        
+                        <div class="text-base space-y-2 text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-phone text-slate-400 w-5"></i>
+                                <span>رقم الهاتف: </span>
+                                <a href="tel:${w.phone}" class="text-emerald-700 font-bold underline" dir="ltr">${w.phone}</a>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-regular fa-calendar-days text-slate-400 w-5"></i>
+                                <span>تاريخ البداية: ${w.startDate}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-regular fa-hourglass-half text-slate-400 w-5"></i>
+                                <span>تاريخ النهاية: ${endDateDisplay}</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2 pt-3 mt-2 border-t border-slate-200">
+                                <div class="flex items-center gap-2 bg-emerald-50 text-emerald-800 p-2 rounded-lg">
+                                    <i class="fa-solid fa-money-bill-wave text-emerald-600"></i>
+                                    <span class="font-bold text-sm">الراتب: ${w.payAmount}</span>
+                                </div>
+                                <div class="flex items-center gap-2 bg-blue-50 text-blue-800 p-2 rounded-lg">
+                                    <i class="fa-solid fa-wallet text-blue-600"></i>
+                                    <span class="font-bold text-sm">الباقي: ${remainingPay}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-3 border-t border-slate-200">
+                            <button onclick="openFinanceModal(${w.id})" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition">
+                                <i class="fa-solid fa-coins text-amber-500 text-lg"></i> السُّلف والحساب
+                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="editWorker(${w.id})" class="text-amber-600 hover:bg-amber-50 px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-pen"></i> تعديل
+                                </button>
+                                <button onclick="deleteWorker(${w.id})" class="text-rose-600 hover:bg-rose-50 px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-trash"></i> حذف
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- تصدير البيانات إلى ملف Excel ---
+        function exportToExcel() {
+            if (workers.length === 0) {
+                alert('لا توجد بيانات عمال لتصديرها!');
+                return;
+            }
+
+            const data = workers.map((w, index) => {
+                const totalAdv = (w.advances || []).reduce((sum, a) => sum + a.amount, 0);
+                return {
+                    "م": index + 1,
+                    "اسم العامل": w.name,
+                    "رقم الهاتف": w.phone,
+                    "طبيعة العمل": w.job,
+                    "تاريخ البداية": w.startDate,
+                    "تاريخ النهاية": w.endDate || 'مستمر',
+                    "نظام الأجر": w.payType,
+                    "إجمالي الأجر": w.payAmount,
+                    "إجمالي السُّلف": totalAdv,
+                    "المبلغ المتبقي": w.payAmount - totalAdv
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "العمال والرواتب");
+
+            XLSX.writeFile(workbook, `كشف_عمال_المزرعة_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['all', 'active', 'expired'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                btn.className = f === filter 
+                    ? 'px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium whitespace-nowrap'
+                    : 'px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium whitespace-nowrap';
+            });
+            renderWorkers();
+        }
+
+        function showSection(section) {
+            if (section === 'add') {
+                document.getElementById('addSection').classList.remove('hidden');
+                document.getElementById('listSection').classList.add('hidden');
+            } else {
+                document.getElementById('addSection').classList.add('hidden');
+                document.getElementById('listSection').classList.remove('hidden');
+                renderWorkers();
+            }
+        }
+    </script>
+</body>
+</html>

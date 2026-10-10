@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }} - لوحة المالك</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10B981;
+            --primary-dark: #059669;
+            --secondary: #1E3A8A;
+            --neutral: #0F172A;
+            --background: #F8FAFC;
+            --surface: #FFFFFF;
+            --surface-variant: #F1F5F9;
+            --border: #E2E8F0;
+            --text-main: #0F172A;
+            --text-muted: #475569;
+            
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --success-text: #065F46;
+            --success-border: #A7F3D0;
+            
+            --warning: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --warning-text: #92400E;
+            --warning-border: #FDE68A;
+            
+            --danger: #EF4444;
+            --danger-bg: #FEE2E2;
+            --danger-text: #991B1B;
+            --danger-border: #FECACA;
+
+            --suspended-bg: #F1F5F9;
+            --suspended-text: #475569;
+            --suspended-border: #CBD5E1;
+
+            --font-main: 'IBM Plex Sans Arabic', sans-serif;
+            --radius-sm: 0.5rem;
+            --radius-md: 1rem;
+            --radius-pill: 9999px;
+            
+            --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-main); background-color: var(--background); color: var(--text-main); line-height: 1.625rem; display: flex; min-height: 100vh; }
+
+        /* Sidebar Layout */
+        .sidebar { width: 280px; background-color: var(--surface); border-left: 1px solid var(--border); padding: 1.5rem; position: fixed; height: 100vh; overflow-y: auto; }
+        .sidebar-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; }
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu li { margin-bottom: 0.5rem; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: var(--text-muted); text-decoration: none; border-radius: var(--radius-sm); font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background-color: var(--surface-variant); color: var(--primary); }
+
+        /* Main Content */
+        .main-content { flex: 1; margin-right: 280px; padding: 2rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        h1 { font-size: 1.75rem; font-weight: 700; }
+
+        /* Cards */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--surface-variant); padding-bottom: 0.75rem; }
+        .card-title { font-weight: 600; font-size: 1.25rem; }
+
+        /* Tables */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th { background: var(--background); color: var(--text-muted); padding: 1rem; font-weight: 600; border-bottom: 2px solid var(--border); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        tr:hover td { background-color: var(--surface-variant); }
+
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.75rem; border-radius: var(--radius-pill); font-size: 0.875rem; font-weight: 500; }
+        .badge::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; }
+        .badge-active { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+        .badge-active::before { background: var(--success); }
+        .badge-warning { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+        .badge-warning::before { background: var(--warning); }
+        .badge-suspended { background: var(--suspended-bg); color: var(--suspended-text); border: 1px solid var(--suspended-border); }
+        .badge-suspended::before { background: var(--text-muted); }
+        .badge-danger { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+        .badge-danger::before { background: var(--danger); }
+
+        /* Progress Bar */
+        .progress-container { width: 100%; height: 8px; background: var(--border); border-radius: var(--radius-pill); overflow: hidden; margin-top: 0.5rem; }
+        .progress-bar { height: 100%; transition: width 0.3s ease; }
+
+        /* Buttons */
+        .btn { display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-weight: 500; text-decoration: none; cursor: pointer; border: none; transition: all 0.2s; font-family: inherit; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-danger { background: var(--surface); color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        /* Inputs */
+        .form-control { width: 100%; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; margin-bottom: 1rem; transition: all 0.2s; }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+
+        /* Alerts */
+        .alert { padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-weight: 500; }
+        .alert-success { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+        .alert-danger { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+
+        /* Grid */
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">🌱 المنصة</div>
+        <ul class="sidebar-menu">
+            <li><a href="/admin" class="{% if active_route == 'dashboard' %}active{% endif %}">النظرة العامة</a></li>
+            <li><a href="/admin/farms" class="{% if active_route == 'farms' %}active{% endif %}">إدارة المزارع</a></li>
+            <li><a href="/admin/usage" class="{% if active_route == 'usage' %}active{% endif %}">استخدام العمليات</a></li>
+            <li><a href="/admin/audit" class="{% if active_route == 'audit' %}active{% endif %}">سجل التدقيق</a></li>
+            <li><a href="/admin/settings" class="{% if active_route == 'settings' %}active{% endif %}">إعدادات النظام</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        {% if request.query_params.get('success') %}
+            <div class="alert alert-success">تمت العملية بنجاح.</div>
+        {% endif %}
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

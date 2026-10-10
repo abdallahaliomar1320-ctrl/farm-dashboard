@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.db
+*.db-shm
+*.db-wal
+.env
+.pytest_cache/
+mobile_app/
+owner_panel_react/
+expo_app/
+owner_react_ui_src/
+node.msi
+لوحة_التحكم/

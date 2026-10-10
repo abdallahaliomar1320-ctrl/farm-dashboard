@@ -1,0 +1,35 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="page-header">
+    <h1>إضافة مزرعة جديدة</h1>
+    <a href="{{ route('farms.index') }}" class="btn btn-secondary">إلغاء والعودة</a>
+</div>
+
+<div class="card" style="max-width: 600px;">
+    <form action="{{ route('farms.store') }}" method="POST">
+        @csrf
+        <div style="margin-bottom: 1.5rem;">
+            <label class="text-muted" style="font-weight: 600;">اسم المزرعة (مطلوب)</label>
+            <input type="text" name="name" class="form-control" required placeholder="مثال: مزرعة النور">
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <label class="text-muted" style="font-weight: 600;">اسم المسؤول / المالك</label>
+            <input type="text" name="contact_name" class="form-control" placeholder="اختياري">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label class="text-muted" style="font-weight: 600;">رقم الهاتف</label>
+            <input type="text" name="contact_phone" class="form-control" placeholder="اختياري" dir="ltr" style="text-align: right;">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label class="text-muted" style="font-weight: 600;">ملاحظات إدارية</label>
+            <textarea name="notes" class="form-control" rows="4" placeholder="اختياري"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">حفظ وإنشاء المزرعة</button>
+    </form>
+</div>
+@endsection

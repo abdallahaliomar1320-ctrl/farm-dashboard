@@ -1,0 +1,65 @@
+{% extends "layouts/app.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>إدارة المزارع</h1>
+    <a href="/admin/farms/create" class="btn btn-primary">+ إضافة مزرعة جديدة</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form action="/admin/farms" method="GET" style="display: flex; gap: 1rem; width: 100%;">
+            <input type="text" name="search" class="form-control" placeholder="ابحث باسم المزرعة..." value="{{ search }}" style="margin-bottom: 0;">
+            <select name="status" class="form-control" style="margin-bottom: 0; width: 200px;">
+                <option value="">كل الحالات</option>
+                <option value="active" {% if status == 'active' %}selected{% endif %}>نشط</option>
+                <option value="suspended" {% if status == 'suspended' %}selected{% endif %}>معلق</option>
+            </select>
+            <button type="submit" class="btn btn-secondary">تصفية</button>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>المُعرّف</th>
+                    <th>اسم المزرعة</th>
+                    <th>المسؤول</th>
+                    <th>حالة المزرعة</th>
+                    <th>حالة الاشتراك</th>
+                    <th>العمليات الإجمالية</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for farm in items %}
+                <tr>
+                    <td>#{{ farm.id }}</td>
+                    <td style="font-weight: 600;">{{ farm.name }}</td>
+                    <td>{{ farm.contact_name or '-' }}<br><small class="text-muted">{{ farm.contact_phone or '' }}</small></td>
+                    <td>
+                        {% if farm.status == 'active' %}
+                            <span class="badge badge-active">نشط</span>
+                        {% else %}
+                            <span class="badge badge-suspended">معلق</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if farm.subscription.active %}
+                            <span class="badge badge-active">نشط (حتى {{ farm.subscription.end_date }})</span>
+                        {% else %}
+                            <span class="badge badge-danger">غير نشط</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ farm.operations_total }}</td>
+                    <td>
+                        <a href="/admin/farms/{{ farm.id }}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">تفاصيل</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

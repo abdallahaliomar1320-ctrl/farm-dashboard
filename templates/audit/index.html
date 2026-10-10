@@ -1,0 +1,38 @@
+{% extends "layouts/app.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>سجل التدقيق (Audit Log)</h1>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>م</th>
+                    <th>المنفذ</th>
+                    <th>الإجراء</th>
+                    <th>الكيان</th>
+                    <th>معرف الكيان</th>
+                    <th>السبب</th>
+                    <th>التاريخ والوقت</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in items %}
+                <tr>
+                    <td>{{ log.id }}</td>
+                    <td>{{ log.actor }}</td>
+                    <td><span class="badge badge-suspended" dir="ltr">{{ log.action }}</span></td>
+                    <td dir="ltr">{{ log.entity }}</td>
+                    <td>{{ log.entity_id }}</td>
+                    <td>{{ log.reason or '-' }}</td>
+                    <td dir="ltr">{{ log.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
